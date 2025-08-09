@@ -77,21 +77,25 @@ function formatResponseWithBusinesses(responseMessage: string, businesses?: Reco
 🕒 ${firstBusiness.hours}`
 }
 
+// Helper function to format list of all businesses
+function formatBusinessesList(businesses: Record<string, Business>): string {
+  const businessNames = Object.keys(businesses)
+  const total = businessNames.length
+
+  const businessList = businessNames.map((name, index) => {
+    const business = businesses[name]
+    return `${index + 1}. ${name} (${business.stars}⭐ ${business.price_range})`
+  }).join('\n')
+
+  return `I found ${total} great options for you:
+
+${businessList}
+
+Let me contact each one to check their availability...`
+}
+
 // Helper function to format cycling message for a specific business
 function formatCyclingMessage(businessName: string, business: Business, index: number, total: number): string {
-  if (index === 0) {
-    return `I found ${total} great options for you! Let me contact each one to check availability:
-
-I'm contacting ${businessName} for you (${index + 1}/${total}):
-
-📍 ${businessName}
-📞 ${business.number}
-⭐ ${business.stars} stars | ${business.price_range}
-🕒 ${business.hours}
-
-Let me check their availability...`
-  }
-  
   return `I'm contacting ${businessName} for you (${index + 1}/${total}):
 
 📍 ${businessName}
@@ -150,7 +154,7 @@ export function Chat() {
           // Update the cycling message content
           const businessName = businessNames[nextIndex]
           const business = cyclingBusinesses[businessName]
-          const newContent = formatCyclingMessage(businessName, business, nextIndex, totalBusinesses)
+          const newContent = `Calling ${businessName} (${business.stars}⭐ ${business.price_range})...`
 
           setItems((prev) =>
             prev.map((item) =>
@@ -363,7 +367,7 @@ export function Chat() {
             return (
               <React.Fragment key={it.id}>
                 <ChatBubble role={it.role} pending={it.pending}>
-                  {it.pending && it.role === "bot" ? <TypingIndicator businesses={typingBusinesses} /> : it.content}
+                  {it.pending && it.role === "bot" ? <TypingIndicator businesses={typingBusinesses} isWaiting={true} /> : it.content}
                 </ChatBubble>
                 {it.role === "user" && idx === lastUserIndex && (
                   <div className="mt-1 flex justify-end pr-2">

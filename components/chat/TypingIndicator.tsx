@@ -3,9 +3,10 @@ import { type Business } from "@/lib/api-types"
 
 interface TypingIndicatorProps {
   businesses?: Record<string, Business> | null
+  isWaiting?: boolean
 }
 
-export function TypingIndicator({ businesses }: TypingIndicatorProps) {
+export function TypingIndicator({ businesses, isWaiting = true }: TypingIndicatorProps) {
   const [currentIndex, setCurrentIndex] = React.useState(0)
 
   // If we have businesses data, create cycling messages with business info
@@ -14,7 +15,11 @@ export function TypingIndicator({ businesses }: TypingIndicatorProps) {
       const businessNames = Object.keys(businesses)
       return businessNames.map((name, index) => {
         const business = businesses[name]
-        return `Contacting ${name} (${business.stars}⭐ ${business.price_range})...`
+        if (isWaiting) {
+          return `Contacting ${name} (${business.stars}⭐ ${business.price_range})...`
+        } else {
+          return `Calling ${name} (${business.stars}⭐ ${business.price_range})...`
+        }
       })
     }
 
@@ -29,7 +34,7 @@ export function TypingIndicator({ businesses }: TypingIndicatorProps) {
       "Processing your request...",
       "Compiling results...",
     ]
-  }, [businesses])
+  }, [businesses, isWaiting])
 
   React.useEffect(() => {
     const interval = setInterval(() => {
