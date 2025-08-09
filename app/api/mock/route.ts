@@ -32,7 +32,7 @@ export async function POST(req: Request) {
           stars: 4.1,
         },
       }
-      const response = continueConversationResponseSchema.parse({ 
+      const response = continueConversationResponseSchema.parse({
         response_message: `echo: ${user_request}`,
         businesses: mockBusinesses
       })

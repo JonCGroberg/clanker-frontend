@@ -119,6 +119,7 @@ export function Chat() {
   const [cyclingBusinesses, setCyclingBusinesses] = React.useState<Record<string, Business> | null>(null)
   const [currentBusinessIndex, setCurrentBusinessIndex] = React.useState(0)
   const [cyclingMessageId, setCyclingMessageId] = React.useState<string | null>(null)
+  const [typingBusinesses, setTypingBusinesses] = React.useState<Record<string, Business> | null>(null)
   const scrollRef = React.useRef<HTMLDivElement>(null)
   const inputRef = React.useRef<HTMLInputElement>(null)
   const cyclingTimerRef = React.useRef<NodeJS.Timeout | null>(null)
@@ -208,7 +209,7 @@ export function Chat() {
 
         setConversationId(data.conversation_id)
 
-        // Check if we have businesses data for cycling
+        // Extract businesses data for typing indicator and cycling
         let parsedBusinesses = data.businesses
         if (!parsedBusinesses && data.response_message.includes('"businesses"')) {
           try {
@@ -219,6 +220,11 @@ export function Chat() {
           } catch (error) {
             console.error('Failed to parse businesses JSON:', error)
           }
+        }
+
+        // Set businesses data for typing indicator
+        if (parsedBusinesses) {
+          setTypingBusinesses(parsedBusinesses)
         }
 
         if (parsedBusinesses && Object.keys(parsedBusinesses).length > 1) {
@@ -262,7 +268,7 @@ export function Chat() {
         if (!res.ok) throw new Error("Request failed")
         const data: ContinueConversationResponse = await res.json()
 
-        // Check if we have businesses data for cycling
+        // Extract businesses data for typing indicator and cycling
         let parsedBusinesses = data.businesses
         if (!parsedBusinesses && data.response_message.includes('"businesses"')) {
           try {
@@ -273,6 +279,11 @@ export function Chat() {
           } catch (error) {
             console.error('Failed to parse businesses JSON:', error)
           }
+        }
+
+        // Set businesses data for typing indicator
+        if (parsedBusinesses) {
+          setTypingBusinesses(parsedBusinesses)
         }
 
         if (parsedBusinesses && Object.keys(parsedBusinesses).length > 1) {
@@ -352,7 +363,7 @@ export function Chat() {
             return (
               <React.Fragment key={it.id}>
                 <ChatBubble role={it.role} pending={it.pending}>
-                  {it.pending && it.role === "bot" ? <TypingIndicator /> : it.content}
+                  {it.pending && it.role === "bot" ? <TypingIndicator businesses={typingBusinesses} /> : it.content}
                 </ChatBubble>
                 {it.role === "user" && idx === lastUserIndex && (
                   <div className="mt-1 flex justify-end pr-2">

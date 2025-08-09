@@ -1,29 +1,47 @@
 import React from "react"
+import { type Business } from "@/lib/api-types"
 
-export function TypingIndicator() {
-  const sentences = [
-    "Searching the internet...",
-    "Checking nearby services...",
-    "Almost there...",
-    "Making calls...",
-    "Contacting relevant parties...",
-    "Gathering information...",
-    "Processing your request...",
-    "Compiling results...",
-  ]
-  const [currentSentenceIndex, setCurrentSentenceIndex] = React.useState(0)
+interface TypingIndicatorProps {
+  businesses?: Record<string, Business> | null
+}
+
+export function TypingIndicator({ businesses }: TypingIndicatorProps) {
+  const [currentIndex, setCurrentIndex] = React.useState(0)
+
+  // If we have businesses data, create cycling messages with business info
+  const messages = React.useMemo(() => {
+    if (businesses && Object.keys(businesses).length > 0) {
+      const businessNames = Object.keys(businesses)
+      return businessNames.map((name, index) => {
+        const business = businesses[name]
+        return `Contacting ${name} (${business.stars}⭐ ${business.price_range})...`
+      })
+    }
+
+    // Fallback to generic messages
+    return [
+      "Searching the internet...",
+      "Checking nearby services...",
+      "Almost there...",
+      "Making calls...",
+      "Contacting relevant parties...",
+      "Gathering information...",
+      "Processing your request...",
+      "Compiling results...",
+    ]
+  }, [businesses])
 
   React.useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentSentenceIndex((prevIndex) => (prevIndex + 1) % sentences.length)
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % messages.length)
     }, 2000)
 
     return () => clearInterval(interval)
-  }, [sentences.length])
+  }, [messages.length])
 
   return (
     <div className="flex items-center px-1">
-      <span>{sentences[currentSentenceIndex]}</span>
+      <span>{messages[currentIndex]}</span>
     </div>
   )
 }
