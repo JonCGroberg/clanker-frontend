@@ -118,7 +118,7 @@ function handleBusinessResponseWithTwoMessages(
 ) {
   const businessNames = Object.keys(parsedBusinesses)
   const total = businessNames.length
-  
+
   // First message: Show how many places found
   setItems((prev) =>
     prev.map((it) =>
@@ -127,25 +127,25 @@ function handleBusinessResponseWithTwoMessages(
         : it,
     ),
   )
-  
+
   // Second message: Create cycling message after a short delay
   setTimeout(() => {
     const cyclingMsgId = generateId()
     const firstBusinessName = businessNames[0]
     const firstBusiness = parsedBusinesses[firstBusinessName]
-    
+
     // Add the cycling message
     setItems((prev) => [
       ...prev,
-      { 
-        id: cyclingMsgId, 
-        kind: "message", 
-        role: "bot", 
-        content: `Calling ${firstBusinessName} (${firstBusiness.stars}⭐ ${firstBusiness.price_range})...`,
-        pending: true 
+      {
+        id: cyclingMsgId,
+        kind: "message",
+        role: "bot",
+        content: `Initiating call with ${firstBusinessName} (${firstBusiness.stars}⭐ ${firstBusiness.price_range})...`,
+        pending: true
       }
     ])
-    
+
     // Start cycling through businesses
     setCyclingBusinesses(parsedBusinesses)
     setCyclingMessageId(cyclingMsgId)
@@ -201,7 +201,7 @@ export function Chat() {
           // Update the cycling message content
           const businessName = businessNames[nextIndex]
           const business = cyclingBusinesses[businessName]
-          const newContent = `Calling ${businessName} (${business.stars}⭐ ${business.price_range})...`
+          const newContent = `Initiating call with ${businessName} (${business.stars}⭐ ${business.price_range})...`
 
           setItems((prev) =>
             prev.map((item) =>
@@ -225,7 +225,7 @@ export function Chat() {
 
           return nextIndex
         })
-      }, 3000) // Change every 3 seconds
+      }, 5000) // Change every 5 seconds
     }
 
     // Cleanup on unmount

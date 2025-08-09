@@ -18,7 +18,7 @@ export function TypingIndicator({ businesses, isWaiting = true }: TypingIndicato
         if (isWaiting) {
           return `Contacting ${name} (${business.stars}⭐ ${business.price_range})...`
         } else {
-          return `Calling ${name} (${business.stars}⭐ ${business.price_range})...`
+          return `Initiating call with ${name} (${business.stars}⭐ ${business.price_range})...`
         }
       })
     }
