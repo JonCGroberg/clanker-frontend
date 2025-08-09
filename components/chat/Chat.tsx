@@ -190,9 +190,11 @@ export function Chat() {
         clearInterval(cyclingTimerRef.current)
       }
 
-      // Start cycling every 3 seconds for 30 seconds total (10 cycles)
+      // Start cycling every 2 seconds for 30 seconds total (15 cycles)
       let cycleCount = 0
-      const maxCycles = 10
+      const maxCycles = 15
+      const finalMessages = ["Compiling results...", "Comparing times...", "Scheduling...", "Gathering results..."]
+      let finalMessageIndex = 0
 
       cyclingTimerRef.current = setInterval(() => {
         setCurrentBusinessIndex((prevIndex) => {
@@ -213,25 +215,38 @@ export function Chat() {
 
           cycleCount++
           if (cycleCount >= maxCycles) {
-                             // After 30 seconds, show "..." and stop cycling
-                 const finalContent = "..."
+            // After 30 seconds, start cycling through final messages
+            const finalContent = finalMessages[finalMessageIndex]
 
-                 setItems((prev) =>
-                   prev.map((item) =>
-                     item.id === cyclingMessageId
-                       ? { ...item, content: finalContent, pending: false }
-                       : item
-                   )
-                 )
+            setItems((prev) =>
+              prev.map((item) =>
+                item.id === cyclingMessageId
+                  ? { ...item, content: finalContent }
+                  : item
+              )
+            )
 
-            // Stop cycling
-            if (cyclingTimerRef.current) {
-              clearInterval(cyclingTimerRef.current)
-              cyclingTimerRef.current = null
+            finalMessageIndex = (finalMessageIndex + 1) % finalMessages.length
+
+            // After cycling through final messages a few times, stop
+            if (finalMessageIndex === 0 && cycleCount >= maxCycles + finalMessages.length) {
+              setItems((prev) =>
+                prev.map((item) =>
+                  item.id === cyclingMessageId
+                    ? { ...item, content: finalMessages[finalMessages.length - 1], pending: false }
+                    : item
+                )
+              )
+
+              // Stop cycling
+              if (cyclingTimerRef.current) {
+                clearInterval(cyclingTimerRef.current)
+                cyclingTimerRef.current = null
+              }
+              setCyclingBusinesses(null)
+              setCyclingMessageId(null)
+              setCurrentBusinessIndex(0)
             }
-            setCyclingBusinesses(null)
-            setCyclingMessageId(null)
-            setCurrentBusinessIndex(0)
           }
 
           return nextIndex
