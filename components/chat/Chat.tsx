@@ -229,8 +229,8 @@ export function Chat() {
 
           finalMessageIndex = (finalMessageIndex + 1) % finalMessages.length
 
-          // After cycling through final messages a few times, stop
-          if (finalMessageIndex === 0 && cycleCount >= maxCycles + finalMessages.length) {
+          // After cycling through final messages once, stop
+          if (finalMessageIndex === 0) {
             // Stop cycling
             if (cyclingTimerRef.current) {
               clearInterval(cyclingTimerRef.current)
