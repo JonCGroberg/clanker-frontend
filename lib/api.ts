@@ -1,4 +1,4 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000"
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://extras-counts-hat-plasma.trycloudflare.com"
 
 export const CREATE_CONVERSATION_ENDPOINT_PATH = "/v1/conversation"
 export const CONTINUE_CONVERSATION_ENDPOINT_PATH = "/v1/conversation/continue"
