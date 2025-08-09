@@ -217,7 +217,7 @@ export function Chat() {
             const firstBusinessName = businessNames[0]
             const firstBusiness = cyclingBusinesses[firstBusinessName]
             const finalContent = `Initiating call with ${firstBusinessName} (${firstBusiness.stars}⭐ ${firstBusiness.price_range})...`
-            
+
             setItems((prev) =>
               prev.map((item) =>
                 item.id === cyclingMessageId
@@ -225,7 +225,7 @@ export function Chat() {
                   : item
               )
             )
-            
+
             // Stop cycling
             if (cyclingTimerRef.current) {
               clearInterval(cyclingTimerRef.current)
@@ -238,7 +238,7 @@ export function Chat() {
 
           return nextIndex
         })
-      }, 5000) // Change every 5 seconds
+      }, 2000) // Change every 2 seconds
     }
 
     // Cleanup on unmount
