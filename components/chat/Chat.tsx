@@ -246,6 +246,24 @@ export function Chat() {
               setCyclingBusinesses(null)
               setCyclingMessageId(null)
               setCurrentBusinessIndex(0)
+
+              // Set a 60-second timer for success confirmation
+              setTimeout(() => {
+                const firstBusinessName = businessNames[0]
+                const firstBusiness = cyclingBusinesses[firstBusinessName]
+                const successMessage = `✅ Successfully confirmed appointment with ${firstBusinessName}! 📞 ${firstBusiness.number} ⭐ ${firstBusiness.stars} stars`
+
+                setItems((prev) => [
+                  ...prev,
+                  {
+                    id: generateId(),
+                    kind: "message",
+                    role: "bot",
+                    content: successMessage,
+                    pending: false
+                  }
+                ])
+              }, 60000) // 60 seconds
             }
           }
 
