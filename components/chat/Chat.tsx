@@ -35,15 +35,40 @@ export type ChatItem =
 
 // Helper function to format response with business data
 function formatResponseWithBusinesses(responseMessage: string, businesses?: Record<string, Business>): string {
-  if (!businesses || Object.keys(businesses).length === 0) {
+  // Try to parse businesses from response message if it contains JSON
+  let parsedBusinesses = businesses
+  
+  if (!parsedBusinesses && responseMessage.includes('"businesses"')) {
+    try {
+      // Try to parse the entire response message as JSON
+      const parsed = JSON.parse(responseMessage)
+      if (parsed.businesses) {
+        parsedBusinesses = parsed.businesses
+      }
+    } catch (error) {
+      // If that fails, try to extract JSON from within the message
+      try {
+        const jsonMatch = responseMessage.match(/\{[^}]*"businesses"[^}]*\}/)
+        if (jsonMatch) {
+          const jsonStr = jsonMatch[0]
+          const parsed = JSON.parse(jsonStr)
+          parsedBusinesses = parsed.businesses
+        }
+      } catch (innerError) {
+        console.error('Failed to parse businesses JSON:', innerError)
+      }
+    }
+  }
+
+  if (!parsedBusinesses || Object.keys(parsedBusinesses).length === 0) {
     return responseMessage
   }
 
   // Get the first business from the list
-  const firstBusinessName = Object.keys(businesses)[0]
-  const firstBusiness = businesses[firstBusinessName]
+  const firstBusinessName = Object.keys(parsedBusinesses)[0]
+  const firstBusiness = parsedBusinesses[firstBusinessName]
 
-  return `Perfect! I've made an appointment for you at ${firstBusinessName}. 
+  return `Perfect! I've made an appointment for you at ${firstBusinessName}.
 
 📞 Call them at ${firstBusiness.number} to confirm your appointment.
 
