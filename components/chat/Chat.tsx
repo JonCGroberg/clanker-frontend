@@ -229,43 +229,32 @@ export function Chat() {
 
           finalMessageIndex = (finalMessageIndex + 1) % finalMessages.length
 
-          // After cycling through final messages a few times, stop
-          if (finalMessageIndex === 0 && cycleCount >= maxCycles + finalMessages.length) {
-            setItems((prev) =>
-              prev.map((item) =>
-                item.id === cyclingMessageId
-                  ? { ...item, content: finalMessages[finalMessages.length - 1], pending: false }
-                  : item
-              )
-            )
+                      // After cycling through final messages a few times, stop
+            if (finalMessageIndex === 0 && cycleCount >= maxCycles + finalMessages.length) {
+              // Stop cycling
+              if (cyclingTimerRef.current) {
+                clearInterval(cyclingTimerRef.current)
+                cyclingTimerRef.current = null
+              }
+              setCyclingBusinesses(null)
+              setCyclingMessageId(null)
+              setCurrentBusinessIndex(0)
 
-            // Stop cycling
-            if (cyclingTimerRef.current) {
-              clearInterval(cyclingTimerRef.current)
-              cyclingTimerRef.current = null
+              // Set a 10-second timer for success confirmation
+              setTimeout(() => {
+                const firstBusinessName = businessNames[0]
+                const firstBusiness = cyclingBusinesses[firstBusinessName]
+                const successMessage = `✅ Successfully confirmed appointment with ${firstBusinessName}! 📅 Monday at 3:00 PM 📞 ${firstBusiness.number} ⭐ ${firstBusiness.stars} stars`
+
+                setItems((prev) =>
+                  prev.map((item) =>
+                    item.id === cyclingMessageId
+                      ? { ...item, content: successMessage, pending: false }
+                      : item
+                  )
+                )
+              }, 10000) // 10 seconds
             }
-            setCyclingBusinesses(null)
-            setCyclingMessageId(null)
-            setCurrentBusinessIndex(0)
-
-            // Set a 60-second timer for success confirmation
-            setTimeout(() => {
-              const firstBusinessName = businessNames[0]
-              const firstBusiness = cyclingBusinesses[firstBusinessName]
-              const successMessage = `✅ Successfully confirmed appointment with ${firstBusinessName}! 📅 Tomorrow at 2:30 PM 📞 ${firstBusiness.number} ⭐ ${firstBusiness.stars} stars`
-
-              setItems((prev) => [
-                ...prev,
-                {
-                  id: generateId(),
-                  kind: "message",
-                  role: "bot",
-                  content: successMessage,
-                  pending: false
-                }
-              ])
-            }, 10000) // 60 seconds
-          }
         }
       }, 2000) // Change every 2 seconds
     }
@@ -276,7 +265,7 @@ export function Chat() {
         clearInterval(cyclingTimerRef.current)
       }
     }
-  }, [cyclingBusinesses, cyclingMessageId])
+  }, [cyclingBusinesses, cyclingMessageId, generateId])
 
   async function handleSend() {
     const text = input.trim()
