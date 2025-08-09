@@ -11,16 +11,13 @@ export async function POST(req: Request) {
       )
     }
 
-    const { message, conversationId } = parsed.data
+    const { message } = parsed.data
 
     // Simulate network + processing delay
     await new Promise((r) => setTimeout(r, 15000))
 
-    // Craft a playful reply that includes the conversation id for demonstration
-    const reply =
-      message?.trim().length > 0
-        ? `(${conversationId}) Okay! I got: "${message}". Here’s your mock response.`
-        : "I did not catch that. Could you try again?"
+    // Echo back the exact message string
+    const reply = message
 
     const response = sendMessageResponseSchema.parse({ reply })
     return Response.json(response)
