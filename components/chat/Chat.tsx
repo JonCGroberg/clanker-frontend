@@ -213,7 +213,20 @@ export function Chat() {
 
           cycleCount++
           if (cycleCount >= maxCycles) {
-            // Stop cycling after 30 seconds
+            // After 30 seconds, show the initial cycling message and stop cycling
+            const firstBusinessName = businessNames[0]
+            const firstBusiness = cyclingBusinesses[firstBusinessName]
+            const finalContent = `Initiating call with ${firstBusinessName} (${firstBusiness.stars}⭐ ${firstBusiness.price_range})...`
+            
+            setItems((prev) =>
+              prev.map((item) =>
+                item.id === cyclingMessageId
+                  ? { ...item, content: finalContent, pending: false }
+                  : item
+              )
+            )
+            
+            // Stop cycling
             if (cyclingTimerRef.current) {
               clearInterval(cyclingTimerRef.current)
               cyclingTimerRef.current = null
