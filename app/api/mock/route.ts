@@ -1,27 +1,43 @@
-import { sendMessageRequestSchema, sendMessageResponseSchema } from "@/lib/api-types"
+import {
+  createConversationRequestSchema,
+  createConversationResponseSchema,
+  continueConversationRequestSchema,
+  continueConversationResponseSchema,
+} from "@/lib/api-types"
 
 export async function POST(req: Request) {
   try {
     const json = await req.json()
-    const parsed = sendMessageRequestSchema.safeParse(json)
-    if (!parsed.success) {
+    // Try continue first (has conversation_id), otherwise treat as create
+    const parsedContinue = continueConversationRequestSchema.safeParse(json)
+    const parsedCreate = createConversationRequestSchema.safeParse(json)
+
+    if (!parsedContinue.success && !parsedCreate.success) {
       return new Response(
-        JSON.stringify({ error: "Invalid request body", issues: parsed.error.flatten() }),
+        JSON.stringify({ error: "Invalid request body", issues: { create: parsedCreate.error?.flatten(), cont: parsedContinue.error?.flatten() } }),
         { status: 400 },
       )
     }
 
-    const { message } = parsed.data
-
     // Simulate network + processing delay
-    await new Promise((r) => setTimeout(r, 15000))
+    await new Promise((r) => setTimeout(r, 1200))
 
-    // Echo back the exact message string
-    const reply = message
+    if (parsedContinue.success) {
+      const { user_request } = parsedContinue.data
+      const response = continueConversationResponseSchema.parse({ response_message: `echo: ${user_request}` })
+      return Response.json(response)
+    }
 
-    const response = sendMessageResponseSchema.parse({ reply })
+    if (parsedCreate.success) {
+      const { user_request } = parsedCreate.data
+    const fakeConversationId = "00000000-0000-0000-0000-000000000001"
+    const response = createConversationResponseSchema.parse({
+      conversation_id: fakeConversationId,
+      response_message: `echo: ${user_request}`,
+    })
     return Response.json(response)
+    }
   } catch (e) {
-    return new Response(JSON.stringify({ reply: "Server error." }), { status: 500 })
+    return new Response(JSON.stringify({ error: "Server error." }), { status: 500 })
   }
 }

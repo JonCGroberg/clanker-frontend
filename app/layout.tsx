@@ -4,13 +4,13 @@ import "./globals.css"
 
 export const metadata: Metadata = {
   title: "Clanker",
-  description: "iMessage-style chat UI built with Next.js",
+  description: "Your Personal AI Assistant",
   generator: "v0.dev",
   applicationName: "Clanker",
   metadataBase: new URL("https://clanker.vercel.app"),
   openGraph: {
     title: "Clanker",
-    description: "iMessage-style chat UI built with Next.js",
+    description: "Your Personal AI Assistant",
     url: "https://clanker.vercel.app",
     siteName: "Clanker",
     images: [

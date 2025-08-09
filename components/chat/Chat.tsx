@@ -4,27 +4,36 @@ import React from "react"
 import { ChevronLeft, Mic, Plus, Video, ArrowUp, Bot } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { generateId } from "@/lib/id"
-import { SEND_MESSAGE_ENDPOINT_PATH, resolveApiUrl } from "@/lib/api"
-import { type SendMessageRequest, type SendMessageResponse } from "@/lib/api-types"
+import {
+  CREATE_CONVERSATION_ENDPOINT_PATH,
+  CONTINUE_CONVERSATION_ENDPOINT_PATH,
+  resolveApiUrl,
+} from "@/lib/api"
+import {
+  type CreateConversationRequest,
+  type CreateConversationResponse,
+  type ContinueConversationRequest,
+  type ContinueConversationResponse,
+} from "@/lib/api-types"
 import { ChatBubble } from "./ChatBubble"
 import { TypingIndicator } from "./TypingIndicator"
 
 export type ChatItem =
   | {
-      id: string
-      kind: "message"
-      role: "user" | "bot"
-      content: string
-      pending?: boolean
-    }
+    id: string
+    kind: "message"
+    role: "user" | "bot"
+    content: string
+    pending?: boolean
+  }
   | {
-      id: string
-      kind: "separator"
-      text: string
-    }
+    id: string
+    kind: "separator"
+    text: string
+  }
 
 export function Chat() {
-  const [conversationId] = React.useState(() => generateId())
+  const [conversationId, setConversationId] = React.useState<string | null>(null)
   const [items, setItems] = React.useState<ChatItem[]>([
     { id: generateId(), kind: "separator", text: "iMessage" },
     { id: generateId(), kind: "separator", text: "Today 9:41 AM" },
@@ -57,17 +66,42 @@ export function Chat() {
     setSending(true)
 
     try {
-      const res = await fetch(resolveApiUrl(SEND_MESSAGE_ENDPOINT_PATH), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, conversationId } satisfies SendMessageRequest),
-      })
-      if (!res.ok) throw new Error("Request failed")
-      const data: SendMessageResponse = await res.json()
+      if (!conversationId) {
+        const res = await fetch(resolveApiUrl(CREATE_CONVERSATION_ENDPOINT_PATH), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_request: text } satisfies CreateConversationRequest),
+        })
+        if (!res.ok) throw new Error("Request failed")
+        const data: CreateConversationResponse = await res.json()
 
-      setItems((prev) =>
-        prev.map((it) => (it.id === popMsg.id && it.kind === "message" ? { ...it, content: data.reply, pending: false } : it)),
-      )
+        setConversationId(data.conversation_id)
+        setItems((prev) =>
+          prev.map((it) =>
+            it.id === popMsg.id && it.kind === "message"
+              ? { ...it, content: data.response_message, pending: false }
+              : it,
+          ),
+        )
+      } else {
+        const res = await fetch(resolveApiUrl(CONTINUE_CONVERSATION_ENDPOINT_PATH), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(
+            { conversation_id: conversationId, user_request: text } satisfies ContinueConversationRequest,
+          ),
+        })
+        if (!res.ok) throw new Error("Request failed")
+        const data: ContinueConversationResponse = await res.json()
+
+        setItems((prev) =>
+          prev.map((it) =>
+            it.id === popMsg.id && it.kind === "message"
+              ? { ...it, content: data.response_message, pending: false }
+              : it,
+          ),
+        )
+      }
     } catch {
       setItems((prev) =>
         prev.map((it) =>
