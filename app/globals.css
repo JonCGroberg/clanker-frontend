@@ -1,5 +1,5 @@
-@import 'tailwindcss';
-@import 'tw-animate-css';
+@import "tailwindcss";
+@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -64,6 +64,7 @@
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
+  --radius: 0.625rem;
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
@@ -75,6 +76,7 @@
 }
 
 @theme inline {
+  /* optional: --font-sans, --font-serif, --font-mono if they are applied in the layout.tsx */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -120,4 +122,28 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Keyframe animation for typing dots */
+@keyframes dot-fade {
+  0%,
+  80%,
+  100% {
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+.dot-animation-1 {
+  animation: dot-fade 1.4s infinite ease-in-out;
+}
+
+.dot-animation-2 {
+  animation: dot-fade 1.4s infinite ease-in-out 0.2s; /* Delay for second dot */
+}
+
+.dot-animation-3 {
+  animation: dot-fade 1.4s infinite ease-in-out 0.4s; /* Delay for third dot */
 }

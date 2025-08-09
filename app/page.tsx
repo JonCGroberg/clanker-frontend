@@ -1,7 +1,7 @@
 "use client"
 
 import React from "react"
-import { ArrowUp, ChevronLeft, Mic, Plus, Video, Bot } from "lucide-react" // Ensure Bot is imported
+import { ArrowUp, ChevronLeft, Mic, Plus, Video, Bot } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 type ChatItem =
@@ -57,7 +57,7 @@ function ChatInner() {
     {
       id: id(),
       kind: "message",
-      role: "bot", // Keeping this as bot for Clanker's initial message
+      role: "bot",
       content: "Hey, I'm Clanker, your personal butler, what are you trying to schedule?",
     },
   ])
@@ -75,8 +75,7 @@ function ChatInner() {
     if (!text) return
 
     const userMsg: ChatItem = { id: id(), kind: "message", role: "user", content: text }
-    // Changed 'pop' to 'typing...'
-    const popMsg: ChatItem = { id: id(), kind: "message", role: "bot", content: "...", pending: true }
+    const popMsg: ChatItem = { id: id(), kind: "message", role: "bot", content: "typing", pending: true }
 
     setItems((prev) => [...prev, userMsg, popMsg])
     setInput("")
@@ -160,8 +159,6 @@ function ChatInner() {
       {/* Input bar */}
       <div className="border-t border-[#EBEBF0] bg-white px-3 py-3 sm:px-4">
         <div className="mx-auto flex w-full max-w-[620px] items-center gap-2">
-          {" "}
-          {/* Changed items-end to items-center */}
           <button
             type="button"
             className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#F2F2F7] text-[#0A84FF]"
@@ -237,7 +234,7 @@ function ChatHeader() {
           <Bot className="h-6 w-6 text-[#8E8E93]" /> {/* Robot icon */}
         </div>
         <div className="mt-0.5 flex items-center gap-1 text-[13px] font-medium text-black">
-          <span>Clanker</span> {/* Changed name back to Clanker */}
+          <span>Clanker</span>
           <span className="text-[#8E8E93]">{">"}</span>
         </div>
       </div>
@@ -271,7 +268,11 @@ function Bubble({
           role="status"
           aria-live={pending ? "polite" : "off"}
         >
-          <span className={cn(pending ? "opacity-80" : "opacity-100")}>{children}</span>
+          {pending && role === "bot" ? (
+            <TypingIndicator />
+          ) : (
+            <span className={cn(pending ? "opacity-80" : "opacity-100")}>{children}</span>
+          )}
         </div>
 
         {/* Bubble tail */}
@@ -295,6 +296,19 @@ function Bubble({
           />
         )}
       </div>
+    </div>
+  )
+}
+
+// TypingIndicator component for animated ellipses
+function TypingIndicator() {
+  return (
+    <div className="flex items-center space-x-0.5 px-1">
+      {" "}
+      {/* Added px-1 for padding */}
+      <span className="dot-animation-1 w-1 h-1 bg-black rounded-full inline-block" />
+      <span className="dot-animation-2 w-1 h-1 bg-black rounded-full inline-block" />
+      <span className="dot-animation-3 w-1 h-1 bg-black rounded-full inline-block" />
     </div>
   )
 }
