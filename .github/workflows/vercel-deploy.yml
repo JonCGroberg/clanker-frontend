@@ -38,18 +38,37 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Check Vercel secrets
+        id: check
+        shell: bash
+        run: |
+          has_token=false
+          has_org=false
+          has_project=false
+          if [ -n "${{ secrets.VERCEL_TOKEN }}" ]; then has_token=true; fi
+          if [ -n "${{ secrets.VERCEL_ORG_ID }}" ]; then has_org=true; fi
+          if [ -n "${{ secrets.VERCEL_PROJECT_ID }}" ]; then has_project=true; fi
+          echo "has_token=$has_token" >> $GITHUB_OUTPUT
+          echo "has_org=$has_org" >> $GITHUB_OUTPUT
+          echo "has_project=$has_project" >> $GITHUB_OUTPUT
+
       - name: Pull Vercel env (Preview)
-        if: github.event_name == 'pull_request' || github.ref != 'refs/heads/main'
+        if: (github.event_name == 'pull_request' || github.ref != 'refs/heads/main') && steps.check.outputs.has_token == 'true'
         run: pnpm dlx vercel pull --yes --environment=preview --token "$VERCEL_TOKEN"
 
       - name: Deploy to Vercel (Preview)
-        if: github.event_name == 'pull_request' || github.ref != 'refs/heads/main'
+        if: (github.event_name == 'pull_request' || github.ref != 'refs/heads/main') && steps.check.outputs.has_token == 'true'
         run: pnpm dlx vercel deploy --prebuilt --token "$VERCEL_TOKEN"
 
       - name: Pull Vercel env (Production)
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.check.outputs.has_token == 'true'
         run: pnpm dlx vercel pull --yes --environment=production --token "$VERCEL_TOKEN"
 
       - name: Deploy to Vercel (Production)
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.check.outputs.has_token == 'true'
         run: pnpm dlx vercel deploy --prebuilt --prod --token "$VERCEL_TOKEN"
+
+      - name: Skip notice (secrets missing)
+        if: steps.check.outputs.has_token != 'true'
+        run: |
+          echo "Skipping Vercel deploy steps because VERCEL_TOKEN is not set. Add VERCEL_TOKEN, VERCEL_ORG_ID, and VERCEL_PROJECT_ID as GitHub repo secrets to enable deployments."
