@@ -79,14 +79,27 @@ function formatResponseWithBusinesses(responseMessage: string, businesses?: Reco
 
 // Helper function to format cycling message for a specific business
 function formatCyclingMessage(businessName: string, business: Business, index: number, total: number): string {
-  return `Here's another great option (${index + 1}/${total}):
+  if (index === 0) {
+    return `I found ${total} great options for you! Let me contact each one to check availability:
+
+I'm contacting ${businessName} for you (${index + 1}/${total}):
 
 📍 ${businessName}
 📞 ${business.number}
 ⭐ ${business.stars} stars | ${business.price_range}
 🕒 ${business.hours}
 
-Would you like to book with ${businessName}?`
+Let me check their availability...`
+  }
+  
+  return `I'm contacting ${businessName} for you (${index + 1}/${total}):
+
+📍 ${businessName}
+📞 ${business.number}
+⭐ ${business.stars} stars | ${business.price_range}
+🕒 ${business.hours}
+
+Let me check their availability...`
 }
 
 export function Chat() {
@@ -119,7 +132,7 @@ export function Chat() {
     if (cyclingBusinesses && cyclingMessageId) {
       const businessNames = Object.keys(cyclingBusinesses)
       const totalBusinesses = businessNames.length
-      
+
       // Clear any existing timer
       if (cyclingTimerRef.current) {
         clearInterval(cyclingTimerRef.current)
@@ -128,16 +141,16 @@ export function Chat() {
       // Start cycling every 3 seconds for 30 seconds total (10 cycles)
       let cycleCount = 0
       const maxCycles = 10
-      
+
       cyclingTimerRef.current = setInterval(() => {
         setCurrentBusinessIndex((prevIndex) => {
           const nextIndex = (prevIndex + 1) % totalBusinesses
-          
+
           // Update the cycling message content
           const businessName = businessNames[nextIndex]
           const business = cyclingBusinesses[businessName]
           const newContent = formatCyclingMessage(businessName, business, nextIndex, totalBusinesses)
-          
+
           setItems((prev) =>
             prev.map((item) =>
               item.id === cyclingMessageId
@@ -145,7 +158,7 @@ export function Chat() {
                 : item
             )
           )
-          
+
           cycleCount++
           if (cycleCount >= maxCycles) {
             // Stop cycling after 30 seconds
@@ -157,7 +170,7 @@ export function Chat() {
             setCyclingMessageId(null)
             setCurrentBusinessIndex(0)
           }
-          
+
           return nextIndex
         })
       }, 3000) // Change every 3 seconds
@@ -194,7 +207,7 @@ export function Chat() {
         const data: CreateConversationResponse = await res.json()
 
         setConversationId(data.conversation_id)
-        
+
         // Check if we have businesses data for cycling
         let parsedBusinesses = data.businesses
         if (!parsedBusinesses && data.response_message.includes('"businesses"')) {
@@ -213,13 +226,13 @@ export function Chat() {
           setCyclingBusinesses(parsedBusinesses)
           setCyclingMessageId(popMsg.id)
           setCurrentBusinessIndex(0)
-          
+
           // Show first cycling message
           const businessNames = Object.keys(parsedBusinesses)
           const firstBusinessName = businessNames[0]
           const firstBusiness = parsedBusinesses[firstBusinessName]
           const cyclingContent = formatCyclingMessage(firstBusinessName, firstBusiness, 0, businessNames.length)
-          
+
           setItems((prev) =>
             prev.map((it) =>
               it.id === popMsg.id && it.kind === "message"
@@ -267,13 +280,13 @@ export function Chat() {
           setCyclingBusinesses(parsedBusinesses)
           setCyclingMessageId(popMsg.id)
           setCurrentBusinessIndex(0)
-          
+
           // Show first cycling message
           const businessNames = Object.keys(parsedBusinesses)
           const firstBusinessName = businessNames[0]
           const firstBusiness = parsedBusinesses[firstBusinessName]
           const cyclingContent = formatCyclingMessage(firstBusinessName, firstBusiness, 0, businessNames.length)
-          
+
           setItems((prev) =>
             prev.map((it) =>
               it.id === popMsg.id && it.kind === "message"
