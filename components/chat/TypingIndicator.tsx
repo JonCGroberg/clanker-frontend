@@ -34,12 +34,32 @@ export function TypingIndicator({ businesses, isWaiting = true }: TypingIndicato
   }, [businesses, isWaiting])
 
   React.useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) => (prevIndex + 1) % messages.length)
-    }, 2000)
+    if (businesses && Object.keys(businesses).length > 0) {
+      // For businesses, cycle through each once then stop
+      const businessNames = Object.keys(businesses)
+      let cycleCount = 0
+      const maxCycles = businessNames.length
 
-    return () => clearInterval(interval)
-  }, [messages.length])
+      const interval = setInterval(() => {
+        if (cycleCount < maxCycles) {
+          setCurrentIndex(cycleCount)
+          cycleCount++
+        } else {
+          // Stop cycling after going through each business once
+          clearInterval(interval)
+        }
+      }, 2000)
+
+      return () => clearInterval(interval)
+    } else {
+      // For generic messages, cycle continuously
+      const interval = setInterval(() => {
+        setCurrentIndex((prevIndex) => (prevIndex + 1) % messages.length)
+      }, 2000)
+
+      return () => clearInterval(interval)
+    }
+  }, [businesses, messages.length])
 
   return (
     <div className="flex items-center px-1">
