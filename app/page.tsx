@@ -3,6 +3,7 @@
 import React from "react"
 import { ArrowUp, ChevronLeft, Mic, Plus, Video, Bot } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { uid } from "uid"
 
 type ChatItem =
   | {
@@ -52,10 +53,10 @@ function FloatingChat() {
 
 function ChatInner() {
   const [items, setItems] = React.useState<ChatItem[]>([
-    { id: id(), kind: "separator", text: "iMessage" },
-    { id: id(), kind: "separator", text: "Today 9:41 AM" },
+    { id: uid(), kind: "separator", text: "iMessage" },
+    { id: uid(), kind: "separator", text: "Today 9:41 AM" },
     {
-      id: id(),
+      id: uid(),
       kind: "message",
       role: "bot",
       content: "Hey, I'm Clanker, your personal butler, what are you trying to schedule?",
@@ -74,8 +75,9 @@ function ChatInner() {
     const text = input.trim()
     if (!text) return
 
-    const userMsg: ChatItem = { id: id(), kind: "message", role: "user", content: text }
-    const popMsg: ChatItem = { id: id(), kind: "message", role: "bot", content: "typing", pending: true }
+    const messageId = uid() // Generate a unique ID for this message
+    const userMsg: ChatItem = { id: messageId, kind: "message", role: "user", content: text }
+    const popMsg: ChatItem = { id: uid(), kind: "message", role: "bot", content: "typing...", pending: true }
 
     setItems((prev) => [...prev, userMsg, popMsg])
     setInput("")
@@ -85,7 +87,7 @@ function ChatInner() {
       const res = await fetch("/api/mock", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text }),
+        body: JSON.stringify({ message: text, messageId: messageId }), // Include messageId in the payload
       })
       if (!res.ok) throw new Error("Request failed")
       const data = (await res.json()) as { reply: string }
@@ -258,57 +260,50 @@ function Bubble({
 
   return (
     <div className={cn("flex w-full", isUser ? "justify-end" : "justify-start")}>
-      <div className="relative max-w-[80%]">
-        <div
-          className={cn(
-            "px-3 py-2 text-[17px] leading-6",
-            "rounded-3xl",
-            isUser ? "bg-[#0A84FF] text-white rounded-br-md" : "bg-[#E9E9EB] text-black rounded-bl-md",
-          )}
-          role="status"
-          aria-live={pending ? "polite" : "off"}
-        >
-          {pending && role === "bot" ? (
-            <TypingIndicator />
-          ) : (
-            <span className={cn(pending ? "opacity-80" : "opacity-100")}>{children}</span>
-          )}
-        </div>
-
-        {/* Bubble tail */}
-        {isUser ? (
-          <span
-            className="pointer-events-none absolute -bottom-0.5 -right-1 h-3 w-3 rounded-br-md"
-            aria-hidden="true"
-            style={{
-              background: "#0A84FF",
-              clipPath: 'path("M 0 12 C 6 12 12 6 12 0 L 12 12 Z")',
-            }}
-          />
+      <div
+        className={cn(
+          "px-3 py-2 text-[17px] leading-6",
+          "rounded-3xl", // Apply general roundedness
+          isUser ? "bg-[#0A84FF] text-white rounded-br-md" : "bg-[#E9E9EB] text-black rounded-bl-md", // Override specific corner for tail
+        )}
+        role="status"
+        aria-live={pending ? "polite" : "off"}
+      >
+        {pending && role === "bot" ? (
+          <TypingIndicator />
         ) : (
-          <span
-            className="pointer-events-none absolute -bottom-0.5 -left-1 h-3 w-3 rounded-bl-md"
-            aria-hidden="true"
-            style={{
-              background: "#E9E9EB",
-              clipPath: 'path("M 12 12 C 6 12 0 6 0 0 L 0 12 Z")',
-            }}
-          />
+          <span className={cn(pending ? "opacity-80" : "opacity-100")}>{children}</span>
         )}
       </div>
     </div>
   )
 }
 
-// TypingIndicator component for animated ellipses
+// TypingIndicator component for cycling sentences
 function TypingIndicator() {
+  const sentences = [
+    "Searching the internet...",
+    "Checking nearby services...",
+    "Almost there...",
+    "Making calls...",
+    "Contacting relevant parties...",
+    "Gathering information...",
+    "Processing your request...",
+    "Compiling results...",
+  ]
+  const [currentSentenceIndex, setCurrentSentenceIndex] = React.useState(0)
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSentenceIndex((prevIndex) => (prevIndex + 1) % sentences.length)
+    }, 2000) // Change sentence every 2 seconds
+
+    return () => clearInterval(interval)
+  }, [sentences.length])
+
   return (
-    <div className="flex items-center space-x-0.5 px-1">
-      {" "}
-      {/* Added px-1 for padding */}
-      <span className="dot-animation-1 w-1 h-1 bg-black rounded-full inline-block" />
-      <span className="dot-animation-2 w-1 h-1 bg-black rounded-full inline-block" />
-      <span className="dot-animation-3 w-1 h-1 bg-black rounded-full inline-block" />
+    <div className="flex items-center px-1">
+      <span>{sentences[currentSentenceIndex]}</span>
     </div>
   )
 }

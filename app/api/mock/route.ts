@@ -3,7 +3,7 @@ export async function POST(req: Request) {
     const { message } = (await req.json()) as { message: string }
 
     // Simulate network + processing delay
-    await new Promise((r) => setTimeout(r, 900))
+    await new Promise((r) => setTimeout(r, 15000))
 
     // Craft a playful reply
     const reply =
