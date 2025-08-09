@@ -72,7 +72,7 @@ export function Chat() {
       setItems((prev) =>
         prev.map((it) =>
           it.id === popMsg.id && it.kind === "message"
-            ? { ...it, content: "Failed to get response. Please try again.", pending: false }
+            ? { ...it, content: "sorry there was an issue try again", pending: false }
             : it,
         ),
       )
