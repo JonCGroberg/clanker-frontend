@@ -37,7 +37,7 @@ export type ChatItem =
 function formatResponseWithBusinesses(responseMessage: string, businesses?: Record<string, Business>): string {
   // Try to parse businesses from response message if it contains JSON
   let parsedBusinesses = businesses
-  
+
   if (!parsedBusinesses && responseMessage.includes('"businesses"')) {
     try {
       // Try to parse the entire response message as JSON
@@ -77,6 +77,18 @@ function formatResponseWithBusinesses(responseMessage: string, businesses?: Reco
 🕒 ${firstBusiness.hours}`
 }
 
+// Helper function to format cycling message for a specific business
+function formatCyclingMessage(businessName: string, business: Business, index: number, total: number): string {
+  return `Here's another great option (${index + 1}/${total}):
+
+📍 ${businessName}
+📞 ${business.number}
+⭐ ${business.stars} stars | ${business.price_range}
+🕒 ${business.hours}
+
+Would you like to book with ${businessName}?`
+}
+
 export function Chat() {
   const [conversationId, setConversationId] = React.useState<string | null>(null)
   const [items, setItems] = React.useState<ChatItem[]>([
@@ -91,12 +103,73 @@ export function Chat() {
   ])
   const [input, setInput] = React.useState("")
   const [sending, setSending] = React.useState(false)
+  const [cyclingBusinesses, setCyclingBusinesses] = React.useState<Record<string, Business> | null>(null)
+  const [currentBusinessIndex, setCurrentBusinessIndex] = React.useState(0)
+  const [cyclingMessageId, setCyclingMessageId] = React.useState<string | null>(null)
   const scrollRef = React.useRef<HTMLDivElement>(null)
   const inputRef = React.useRef<HTMLInputElement>(null)
+  const cyclingTimerRef = React.useRef<NodeJS.Timeout | null>(null)
 
   React.useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" })
   }, [items])
+
+  // Handle cycling through businesses
+  React.useEffect(() => {
+    if (cyclingBusinesses && cyclingMessageId) {
+      const businessNames = Object.keys(cyclingBusinesses)
+      const totalBusinesses = businessNames.length
+      
+      // Clear any existing timer
+      if (cyclingTimerRef.current) {
+        clearInterval(cyclingTimerRef.current)
+      }
+
+      // Start cycling every 3 seconds for 30 seconds total (10 cycles)
+      let cycleCount = 0
+      const maxCycles = 10
+      
+      cyclingTimerRef.current = setInterval(() => {
+        setCurrentBusinessIndex((prevIndex) => {
+          const nextIndex = (prevIndex + 1) % totalBusinesses
+          
+          // Update the cycling message content
+          const businessName = businessNames[nextIndex]
+          const business = cyclingBusinesses[businessName]
+          const newContent = formatCyclingMessage(businessName, business, nextIndex, totalBusinesses)
+          
+          setItems((prev) =>
+            prev.map((item) =>
+              item.id === cyclingMessageId
+                ? { ...item, content: newContent }
+                : item
+            )
+          )
+          
+          cycleCount++
+          if (cycleCount >= maxCycles) {
+            // Stop cycling after 30 seconds
+            if (cyclingTimerRef.current) {
+              clearInterval(cyclingTimerRef.current)
+              cyclingTimerRef.current = null
+            }
+            setCyclingBusinesses(null)
+            setCyclingMessageId(null)
+            setCurrentBusinessIndex(0)
+          }
+          
+          return nextIndex
+        })
+      }, 3000) // Change every 3 seconds
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (cyclingTimerRef.current) {
+        clearInterval(cyclingTimerRef.current)
+      }
+    }
+  }, [cyclingBusinesses, cyclingMessageId])
 
   async function handleSend() {
     const text = input.trim()
@@ -121,14 +194,50 @@ export function Chat() {
         const data: CreateConversationResponse = await res.json()
 
         setConversationId(data.conversation_id)
-        const formattedResponse = formatResponseWithBusinesses(data.response_message, data.businesses)
-        setItems((prev) =>
-          prev.map((it) =>
-            it.id === popMsg.id && it.kind === "message"
-              ? { ...it, content: formattedResponse, pending: false }
-              : it,
-          ),
-        )
+        
+        // Check if we have businesses data for cycling
+        let parsedBusinesses = data.businesses
+        if (!parsedBusinesses && data.response_message.includes('"businesses"')) {
+          try {
+            const parsed = JSON.parse(data.response_message)
+            if (parsed.businesses) {
+              parsedBusinesses = parsed.businesses
+            }
+          } catch (error) {
+            console.error('Failed to parse businesses JSON:', error)
+          }
+        }
+
+        if (parsedBusinesses && Object.keys(parsedBusinesses).length > 1) {
+          // Start cycling through businesses
+          setCyclingBusinesses(parsedBusinesses)
+          setCyclingMessageId(popMsg.id)
+          setCurrentBusinessIndex(0)
+          
+          // Show first cycling message
+          const businessNames = Object.keys(parsedBusinesses)
+          const firstBusinessName = businessNames[0]
+          const firstBusiness = parsedBusinesses[firstBusinessName]
+          const cyclingContent = formatCyclingMessage(firstBusinessName, firstBusiness, 0, businessNames.length)
+          
+          setItems((prev) =>
+            prev.map((it) =>
+              it.id === popMsg.id && it.kind === "message"
+                ? { ...it, content: cyclingContent, pending: false }
+                : it,
+            ),
+          )
+        } else {
+          // Show regular formatted response
+          const formattedResponse = formatResponseWithBusinesses(data.response_message, data.businesses)
+          setItems((prev) =>
+            prev.map((it) =>
+              it.id === popMsg.id && it.kind === "message"
+                ? { ...it, content: formattedResponse, pending: false }
+                : it,
+            ),
+          )
+        }
       } else {
         const res = await fetch(resolveApiUrl(CONTINUE_CONVERSATION_ENDPOINT_PATH), {
           method: "POST",
@@ -140,14 +249,49 @@ export function Chat() {
         if (!res.ok) throw new Error("Request failed")
         const data: ContinueConversationResponse = await res.json()
 
-        const formattedResponse = formatResponseWithBusinesses(data.response_message, data.businesses)
-        setItems((prev) =>
-          prev.map((it) =>
-            it.id === popMsg.id && it.kind === "message"
-              ? { ...it, content: formattedResponse, pending: false }
-              : it,
-          ),
-        )
+        // Check if we have businesses data for cycling
+        let parsedBusinesses = data.businesses
+        if (!parsedBusinesses && data.response_message.includes('"businesses"')) {
+          try {
+            const parsed = JSON.parse(data.response_message)
+            if (parsed.businesses) {
+              parsedBusinesses = parsed.businesses
+            }
+          } catch (error) {
+            console.error('Failed to parse businesses JSON:', error)
+          }
+        }
+
+        if (parsedBusinesses && Object.keys(parsedBusinesses).length > 1) {
+          // Start cycling through businesses
+          setCyclingBusinesses(parsedBusinesses)
+          setCyclingMessageId(popMsg.id)
+          setCurrentBusinessIndex(0)
+          
+          // Show first cycling message
+          const businessNames = Object.keys(parsedBusinesses)
+          const firstBusinessName = businessNames[0]
+          const firstBusiness = parsedBusinesses[firstBusinessName]
+          const cyclingContent = formatCyclingMessage(firstBusinessName, firstBusiness, 0, businessNames.length)
+          
+          setItems((prev) =>
+            prev.map((it) =>
+              it.id === popMsg.id && it.kind === "message"
+                ? { ...it, content: cyclingContent, pending: false }
+                : it,
+            ),
+          )
+        } else {
+          // Show regular formatted response
+          const formattedResponse = formatResponseWithBusinesses(data.response_message, data.businesses)
+          setItems((prev) =>
+            prev.map((it) =>
+              it.id === popMsg.id && it.kind === "message"
+                ? { ...it, content: formattedResponse, pending: false }
+                : it,
+            ),
+          )
+        }
       }
     } catch {
       setItems((prev) =>
