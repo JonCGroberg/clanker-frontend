@@ -3,7 +3,7 @@
 import React from "react"
 import { ArrowUp, ChevronLeft, Mic, Plus, Video, Bot } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { uid } from "uid"
+import { type SendMessageRequest, type SendMessageResponse } from "@/lib/api-types"
 
 type ChatItem =
   | {
@@ -53,10 +53,10 @@ function FloatingChat() {
 
 function ChatInner() {
   const [items, setItems] = React.useState<ChatItem[]>([
-    { id: uid(), kind: "separator", text: "iMessage" },
-    { id: uid(), kind: "separator", text: "Today 9:41 AM" },
+    { id: id(), kind: "separator", text: "iMessage" },
+    { id: id(), kind: "separator", text: "Today 9:41 AM" },
     {
-      id: uid(),
+      id: id(),
       kind: "message",
       role: "bot",
       content: "Hey, I'm Clanker, your personal butler, what are you trying to schedule?",
@@ -75,9 +75,9 @@ function ChatInner() {
     const text = input.trim()
     if (!text) return
 
-    const messageId = uid() // Generate a unique ID for this message
+    const messageId = id() // Generate a unique ID for this message
     const userMsg: ChatItem = { id: messageId, kind: "message", role: "user", content: text }
-    const popMsg: ChatItem = { id: uid(), kind: "message", role: "bot", content: "typing...", pending: true }
+    const popMsg: ChatItem = { id: id(), kind: "message", role: "bot", content: "typing...", pending: true }
 
     setItems((prev) => [...prev, userMsg, popMsg])
     setInput("")
@@ -87,10 +87,10 @@ function ChatInner() {
       const res = await fetch("/api/mock", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text, messageId: messageId }), // Include messageId in the payload
+        body: JSON.stringify({ message: text, conversationId: "demo-convo" } satisfies SendMessageRequest),
       })
       if (!res.ok) throw new Error("Request failed")
-      const data = (await res.json()) as { reply: string }
+      const data: SendMessageResponse = await res.json()
 
       setItems((prev) =>
         prev.map((it) =>
