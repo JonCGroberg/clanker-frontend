@@ -141,7 +141,7 @@ function handleBusinessResponseWithTwoMessages(
         id: cyclingMsgId,
         kind: "message",
         role: "bot",
-        content: `Initiating call with ${firstBusinessName} (${firstBusiness.stars}⭐ ${firstBusiness.price_range})...`,
+        content: `Initiating call with ${firstBusinessName} (${firstBusiness.stars}⭐)...`,
         pending: true
       }
     ])
@@ -201,7 +201,7 @@ export function Chat() {
           // Update the cycling message content
           const businessName = businessNames[nextIndex]
           const business = cyclingBusinesses[businessName]
-          const newContent = `Initiating call with ${businessName} (${business.stars}⭐ ${business.price_range})...`
+          const newContent = `Initiating call with ${businessName} (${business.stars}⭐)...`
 
           setItems((prev) =>
             prev.map((item) =>
@@ -216,7 +216,7 @@ export function Chat() {
             // After 30 seconds, show the initial cycling message and stop cycling
             const firstBusinessName = businessNames[0]
             const firstBusiness = cyclingBusinesses[firstBusinessName]
-            const finalContent = `Initiating call with ${firstBusinessName} (${firstBusiness.stars}⭐ ${firstBusiness.price_range})...`
+            const finalContent = `Initiating call with ${firstBusinessName} (${firstBusiness.stars}⭐)...`
 
             setItems((prev) =>
               prev.map((item) =>
