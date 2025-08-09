@@ -14,6 +14,7 @@ import {
   type CreateConversationResponse,
   type ContinueConversationRequest,
   type ContinueConversationResponse,
+  type Business,
 } from "@/lib/api-types"
 import { ChatBubble } from "./ChatBubble"
 import { TypingIndicator } from "./TypingIndicator"
@@ -31,6 +32,25 @@ export type ChatItem =
     kind: "separator"
     text: string
   }
+
+// Helper function to format response with business data
+function formatResponseWithBusinesses(responseMessage: string, businesses?: Record<string, Business>): string {
+  if (!businesses || Object.keys(businesses).length === 0) {
+    return responseMessage
+  }
+
+  // Get the first business from the list
+  const firstBusinessName = Object.keys(businesses)[0]
+  const firstBusiness = businesses[firstBusinessName]
+
+  return `Perfect! I've made an appointment for you at ${firstBusinessName}. 
+
+📞 Call them at ${firstBusiness.number} to confirm your appointment.
+
+📍 ${firstBusinessName}
+⭐ ${firstBusiness.stars} stars | ${firstBusiness.price_range}
+🕒 ${firstBusiness.hours}`
+}
 
 export function Chat() {
   const [conversationId, setConversationId] = React.useState<string | null>(null)
@@ -76,10 +96,11 @@ export function Chat() {
         const data: CreateConversationResponse = await res.json()
 
         setConversationId(data.conversation_id)
+        const formattedResponse = formatResponseWithBusinesses(data.response_message, data.businesses)
         setItems((prev) =>
           prev.map((it) =>
             it.id === popMsg.id && it.kind === "message"
-              ? { ...it, content: data.response_message, pending: false }
+              ? { ...it, content: formattedResponse, pending: false }
               : it,
           ),
         )
@@ -94,10 +115,11 @@ export function Chat() {
         if (!res.ok) throw new Error("Request failed")
         const data: ContinueConversationResponse = await res.json()
 
+        const formattedResponse = formatResponseWithBusinesses(data.response_message, data.businesses)
         setItems((prev) =>
           prev.map((it) =>
             it.id === popMsg.id && it.kind === "message"
-              ? { ...it, content: data.response_message, pending: false }
+              ? { ...it, content: formattedResponse, pending: false }
               : it,
           ),
         )

@@ -22,20 +22,40 @@ export async function POST(req: Request) {
     // Simulate network + processing delay
     await new Promise((r) => setTimeout(r, 1200))
 
-    if (parsedContinue.success) {
+        if (parsedContinue.success) {
       const { user_request } = parsedContinue.data
-      const response = continueConversationResponseSchema.parse({ response_message: `echo: ${user_request}` })
+      const mockBusinesses = {
+        "Ahmet's Barber & Hair Styling": {
+          hours: "Mon–Fri: 9:00 AM - 6:30 PM; Sat: 9:30 AM - 5:00 PM; Sun: Closed",
+          number: "415-788-1919",
+          price_range: "$$",
+          stars: 4.1,
+        },
+      }
+      const response = continueConversationResponseSchema.parse({ 
+        response_message: `echo: ${user_request}`,
+        businesses: mockBusinesses
+      })
       return Response.json(response)
     }
 
     if (parsedCreate.success) {
       const { user_request } = parsedCreate.data
-    const fakeConversationId = "00000000-0000-0000-0000-000000000001"
-    const response = createConversationResponseSchema.parse({
-      conversation_id: fakeConversationId,
-      response_message: `echo: ${user_request}`,
-    })
-    return Response.json(response)
+      const fakeConversationId = "00000000-0000-0000-0000-000000000001"
+      const mockBusinesses = {
+        "Ahmet's Barber & Hair Styling": {
+          hours: "Mon–Fri: 9:00 AM - 6:30 PM; Sat: 9:30 AM - 5:00 PM; Sun: Closed",
+          number: "415-788-1919",
+          price_range: "$$",
+          stars: 4.1,
+        },
+      }
+      const response = createConversationResponseSchema.parse({
+        conversation_id: fakeConversationId,
+        response_message: `echo: ${user_request}`,
+        businesses: mockBusinesses
+      })
+      return Response.json(response)
     }
   } catch (e) {
     return new Response(JSON.stringify({ error: "Server error." }), { status: 500 })

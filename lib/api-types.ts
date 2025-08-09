@@ -7,9 +7,25 @@ export const createConversationRequestSchema = z.object({
 
 export type CreateConversationRequest = z.infer<typeof createConversationRequestSchema>
 
+// Business schema for barbershop details
+export const businessSchema = z.object({
+  hours: z.string(),
+  number: z.string(),
+  price_range: z.string(),
+  stars: z.number(),
+})
+
+export const businessesResponseSchema = z.object({
+  businesses: z.record(z.string(), businessSchema),
+})
+
+export type Business = z.infer<typeof businessSchema>
+export type BusinessesResponse = z.infer<typeof businessesResponseSchema>
+
 export const createConversationResponseSchema = z.object({
   conversation_id: z.string().uuid(),
   response_message: z.string(),
+  businesses: z.record(z.string(), businessSchema).optional(),
 })
 
 export type CreateConversationResponse = z.infer<typeof createConversationResponseSchema>
@@ -24,6 +40,7 @@ export type ContinueConversationRequest = z.infer<typeof continueConversationReq
 
 export const continueConversationResponseSchema = z.object({
   response_message: z.string(),
+  businesses: z.record(z.string(), businessSchema).optional(),
 })
 
 export type ContinueConversationResponse = z.infer<typeof continueConversationResponseSchema>
