@@ -16,7 +16,7 @@ export function TypingIndicator({ businesses, isWaiting = true }: TypingIndicato
       return businessNames.map((name, index) => {
         const business = businesses[name]
         if (isWaiting) {
-          return `Kicking off call with ${name} (${business.stars}⭐)...`
+          return `Researching ${name} (${business.stars}⭐)...`
         } else {
           return `Kicking off call with ${name} (${business.stars}⭐)...`
         }
