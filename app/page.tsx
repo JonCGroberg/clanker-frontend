@@ -4,20 +4,21 @@ import React from "react"
 import { ArrowUp, ChevronLeft, Mic, Plus, Video, Bot } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { type SendMessageRequest, type SendMessageResponse } from "@/lib/api-types"
+import { SEND_MESSAGE_ENDPOINT_PATH, resolveApiUrl } from "@/lib/api"
 
 type ChatItem =
   | {
-      id: string
-      kind: "message"
-      role: "user" | "bot"
-      content: string
-      pending?: boolean
-    }
+    id: string
+    kind: "message"
+    role: "user" | "bot"
+    content: string
+    pending?: boolean
+  }
   | {
-      id: string
-      kind: "separator"
-      text: string
-    }
+    id: string
+    kind: "separator"
+    text: string
+  }
 
 export default function Page() {
   return (
@@ -84,7 +85,7 @@ function ChatInner() {
     setSending(true)
 
     try {
-      const res = await fetch("/api/mock", {
+      const res = await fetch(resolveApiUrl(SEND_MESSAGE_ENDPOINT_PATH), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: text, conversationId: "demo-convo" } satisfies SendMessageRequest),
