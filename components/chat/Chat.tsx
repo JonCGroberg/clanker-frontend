@@ -106,6 +106,53 @@ function formatCyclingMessage(businessName: string, business: Business, index: n
 Let me check their availability...`
 }
 
+// Helper function to handle business response with two messages
+function handleBusinessResponseWithTwoMessages(
+  parsedBusinesses: Record<string, Business>,
+  popMsg: ChatItem,
+  setItems: React.Dispatch<React.SetStateAction<ChatItem[]>>,
+  setCyclingBusinesses: React.Dispatch<React.SetStateAction<Record<string, Business> | null>>,
+  setCyclingMessageId: React.Dispatch<React.SetStateAction<string | null>>,
+  setCurrentBusinessIndex: React.Dispatch<React.SetStateAction<number>>,
+  generateId: () => string
+) {
+  const businessNames = Object.keys(parsedBusinesses)
+  const total = businessNames.length
+  
+  // First message: Show how many places found
+  setItems((prev) =>
+    prev.map((it) =>
+      it.id === popMsg.id && it.kind === "message"
+        ? { ...it, content: `I found ${total} great places for you!`, pending: false }
+        : it,
+    ),
+  )
+  
+  // Second message: Create cycling message after a short delay
+  setTimeout(() => {
+    const cyclingMsgId = generateId()
+    const firstBusinessName = businessNames[0]
+    const firstBusiness = parsedBusinesses[firstBusinessName]
+    
+    // Add the cycling message
+    setItems((prev) => [
+      ...prev,
+      { 
+        id: cyclingMsgId, 
+        kind: "message", 
+        role: "bot", 
+        content: `Calling ${firstBusinessName} (${firstBusiness.stars}⭐ ${firstBusiness.price_range})...`,
+        pending: true 
+      }
+    ])
+    
+    // Start cycling through businesses
+    setCyclingBusinesses(parsedBusinesses)
+    setCyclingMessageId(cyclingMsgId)
+    setCurrentBusinessIndex(0)
+  }, 1500) // Wait 1.5 seconds before starting cycling
+}
+
 export function Chat() {
   const [conversationId, setConversationId] = React.useState<string | null>(null)
   const [items, setItems] = React.useState<ChatItem[]>([
@@ -232,23 +279,14 @@ export function Chat() {
         }
 
         if (parsedBusinesses && Object.keys(parsedBusinesses).length > 1) {
-          // Start cycling through businesses
-          setCyclingBusinesses(parsedBusinesses)
-          setCyclingMessageId(popMsg.id)
-          setCurrentBusinessIndex(0)
-
-          // Show first cycling message
-          const businessNames = Object.keys(parsedBusinesses)
-          const firstBusinessName = businessNames[0]
-          const firstBusiness = parsedBusinesses[firstBusinessName]
-          const cyclingContent = formatCyclingMessage(firstBusinessName, firstBusiness, 0, businessNames.length)
-
-          setItems((prev) =>
-            prev.map((it) =>
-              it.id === popMsg.id && it.kind === "message"
-                ? { ...it, content: cyclingContent, pending: false }
-                : it,
-            ),
+          handleBusinessResponseWithTwoMessages(
+            parsedBusinesses,
+            popMsg,
+            setItems,
+            setCyclingBusinesses,
+            setCyclingMessageId,
+            setCurrentBusinessIndex,
+            generateId
           )
         } else {
           // Show regular formatted response
@@ -291,23 +329,14 @@ export function Chat() {
         }
 
         if (parsedBusinesses && Object.keys(parsedBusinesses).length > 1) {
-          // Start cycling through businesses
-          setCyclingBusinesses(parsedBusinesses)
-          setCyclingMessageId(popMsg.id)
-          setCurrentBusinessIndex(0)
-
-          // Show first cycling message
-          const businessNames = Object.keys(parsedBusinesses)
-          const firstBusinessName = businessNames[0]
-          const firstBusiness = parsedBusinesses[firstBusinessName]
-          const cyclingContent = formatCyclingMessage(firstBusinessName, firstBusiness, 0, businessNames.length)
-
-          setItems((prev) =>
-            prev.map((it) =>
-              it.id === popMsg.id && it.kind === "message"
-                ? { ...it, content: cyclingContent, pending: false }
-                : it,
-            ),
+          handleBusinessResponseWithTwoMessages(
+            parsedBusinesses,
+            popMsg,
+            setItems,
+            setCyclingBusinesses,
+            setCyclingMessageId,
+            setCurrentBusinessIndex,
+            generateId
           )
         } else {
           // Show regular formatted response
