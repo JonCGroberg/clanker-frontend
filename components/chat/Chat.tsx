@@ -200,23 +200,21 @@ export function Chat() {
         cycleCount++
 
         if (cycleCount < maxCycles) {
-          // Still cycling through businesses
-          setCurrentBusinessIndex((prevIndex) => {
-            const nextIndex = (prevIndex + 1) % totalBusinesses
-            const businessName = businessNames[nextIndex]
-            const business = cyclingBusinesses[businessName]
-            const newContent = `Kicking off call with ${businessName} (${business.stars}⭐)...`
+          // Still cycling through businesses - go through each once
+          const currentIndex = cycleCount
+          const businessName = businessNames[currentIndex]
+          const business = cyclingBusinesses[businessName]
+          const newContent = `Kicking off call with ${businessName} (${business.stars}⭐)...`
 
-            setItems((prev) =>
-              prev.map((item) =>
-                item.id === cyclingMessageId
-                  ? { ...item, content: newContent }
-                  : item
-              )
+          setItems((prev) =>
+            prev.map((item) =>
+              item.id === cyclingMessageId
+                ? { ...item, content: newContent }
+                : item
             )
+          )
 
-            return nextIndex
-          })
+          setCurrentBusinessIndex(currentIndex)
         } else {
           // Start cycling through final messages
           const finalContent = finalMessages[finalMessageIndex]
