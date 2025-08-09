@@ -190,9 +190,9 @@ export function Chat() {
         clearInterval(cyclingTimerRef.current)
       }
 
-      // Start cycling every 2 seconds for 30 seconds total (15 cycles)
+      // Start cycling every 2 seconds - cycle through businesses once, then final messages
       let cycleCount = 0
-      const maxCycles = 15
+      const maxCycles = totalBusinesses // Cycle through businesses once
       const finalMessages = ["Compiling results...", "Comparing times...", "Scheduling...", "Gathering results..."]
       let finalMessageIndex = 0
 
@@ -250,23 +250,23 @@ export function Chat() {
             setCyclingMessageId(null)
             setCurrentBusinessIndex(0)
 
-                          // Set a 60-second timer for success confirmation
-              setTimeout(() => {
-                const firstBusinessName = businessNames[0]
-                const firstBusiness = cyclingBusinesses[firstBusinessName]
-                const successMessage = `✅ Successfully confirmed appointment with ${firstBusinessName}! 📅 Tomorrow at 2:30 PM 📞 ${firstBusiness.number} ⭐ ${firstBusiness.stars} stars`
+            // Set a 60-second timer for success confirmation
+            setTimeout(() => {
+              const firstBusinessName = businessNames[0]
+              const firstBusiness = cyclingBusinesses[firstBusinessName]
+              const successMessage = `✅ Successfully confirmed appointment with ${firstBusinessName}! 📅 Tomorrow at 2:30 PM 📞 ${firstBusiness.number} ⭐ ${firstBusiness.stars} stars`
 
-                setItems((prev) => [
-                  ...prev,
-                  {
-                    id: generateId(),
-                    kind: "message",
-                    role: "bot",
-                    content: successMessage,
-                    pending: false
-                  }
-                ])
-              }, 60000) // 60 seconds
+              setItems((prev) => [
+                ...prev,
+                {
+                  id: generateId(),
+                  kind: "message",
+                  role: "bot",
+                  content: successMessage,
+                  pending: false
+                }
+              ])
+            }, 10000) // 60 seconds
           }
         }
       }, 2000) // Change every 2 seconds
