@@ -197,78 +197,78 @@ export function Chat() {
       let finalMessageIndex = 0
 
       cyclingTimerRef.current = setInterval(() => {
-        setCurrentBusinessIndex((prevIndex) => {
-          const nextIndex = (prevIndex + 1) % totalBusinesses
-
-          // Update the cycling message content
-          const businessName = businessNames[nextIndex]
-          const business = cyclingBusinesses[businessName]
-          const newContent = `Kicking off call with ${businessName} (${business.stars}⭐)...`
-
-          setItems((prev) =>
-            prev.map((item) =>
-              item.id === cyclingMessageId
-                ? { ...item, content: newContent }
-                : item
-            )
-          )
-
-          cycleCount++
-          if (cycleCount >= maxCycles) {
-            // After 30 seconds, start cycling through final messages
-            const finalContent = finalMessages[finalMessageIndex]
+        cycleCount++
+        
+        if (cycleCount < maxCycles) {
+          // Still cycling through businesses
+          setCurrentBusinessIndex((prevIndex) => {
+            const nextIndex = (prevIndex + 1) % totalBusinesses
+            const businessName = businessNames[nextIndex]
+            const business = cyclingBusinesses[businessName]
+            const newContent = `Kicking off call with ${businessName} (${business.stars}⭐)...`
 
             setItems((prev) =>
               prev.map((item) =>
                 item.id === cyclingMessageId
-                  ? { ...item, content: finalContent }
+                  ? { ...item, content: newContent }
                   : item
               )
             )
 
-            finalMessageIndex = (finalMessageIndex + 1) % finalMessages.length
+            return nextIndex
+          })
+        } else {
+          // Start cycling through final messages
+          const finalContent = finalMessages[finalMessageIndex]
 
-            // After cycling through final messages a few times, stop
-            if (finalMessageIndex === 0 && cycleCount >= maxCycles + finalMessages.length) {
-              setItems((prev) =>
-                prev.map((item) =>
-                  item.id === cyclingMessageId
-                    ? { ...item, content: finalMessages[finalMessages.length - 1], pending: false }
-                    : item
-                )
+          setItems((prev) =>
+            prev.map((item) =>
+              item.id === cyclingMessageId
+                ? { ...item, content: finalContent }
+                : item
+            )
+          )
+
+          finalMessageIndex = (finalMessageIndex + 1) % finalMessages.length
+
+          // After cycling through final messages a few times, stop
+          if (finalMessageIndex === 0 && cycleCount >= maxCycles + finalMessages.length) {
+            setItems((prev) =>
+              prev.map((item) =>
+                item.id === cyclingMessageId
+                  ? { ...item, content: finalMessages[finalMessages.length - 1], pending: false }
+                  : item
               )
+            )
 
-              // Stop cycling
-              if (cyclingTimerRef.current) {
-                clearInterval(cyclingTimerRef.current)
-                cyclingTimerRef.current = null
-              }
-              setCyclingBusinesses(null)
-              setCyclingMessageId(null)
-              setCurrentBusinessIndex(0)
-
-              // Set a 60-second timer for success confirmation
-              setTimeout(() => {
-                const firstBusinessName = businessNames[0]
-                const firstBusiness = cyclingBusinesses[firstBusinessName]
-                const successMessage = `✅ Successfully confirmed appointment with ${firstBusinessName}! 📞 ${firstBusiness.number} ⭐ ${firstBusiness.stars} stars`
-
-                setItems((prev) => [
-                  ...prev,
-                  {
-                    id: generateId(),
-                    kind: "message",
-                    role: "bot",
-                    content: successMessage,
-                    pending: false
-                  }
-                ])
-              }, 60000) // 60 seconds
+            // Stop cycling
+            if (cyclingTimerRef.current) {
+              clearInterval(cyclingTimerRef.current)
+              cyclingTimerRef.current = null
             }
-          }
+            setCyclingBusinesses(null)
+            setCyclingMessageId(null)
+            setCurrentBusinessIndex(0)
 
-          return nextIndex
-        })
+            // Set a 60-second timer for success confirmation
+            setTimeout(() => {
+              const firstBusinessName = businessNames[0]
+              const firstBusiness = cyclingBusinesses[firstBusinessName]
+              const successMessage = `✅ Successfully confirmed appointment with ${firstBusinessName}! 📞 ${firstBusiness.number} ⭐ ${firstBusiness.stars} stars`
+
+              setItems((prev) => [
+                ...prev,
+                {
+                  id: generateId(),
+                  kind: "message",
+                  role: "bot",
+                  content: successMessage,
+                  pending: false
+                }
+              ])
+            }, 60000) // 60 seconds
+          }
+        }
       }, 2000) // Change every 2 seconds
     }
 
