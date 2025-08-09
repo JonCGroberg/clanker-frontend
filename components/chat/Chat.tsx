@@ -1,0 +1,215 @@
+"use client"
+
+import React from "react"
+import { ChevronLeft, Mic, Plus, Video, ArrowUp, Bot } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { generateId } from "@/lib/id"
+import { SEND_MESSAGE_ENDPOINT_PATH, resolveApiUrl } from "@/lib/api"
+import { type SendMessageRequest, type SendMessageResponse } from "@/lib/api-types"
+import { ChatBubble } from "./ChatBubble"
+import { TypingIndicator } from "./TypingIndicator"
+
+export type ChatItem =
+  | {
+      id: string
+      kind: "message"
+      role: "user" | "bot"
+      content: string
+      pending?: boolean
+    }
+  | {
+      id: string
+      kind: "separator"
+      text: string
+    }
+
+export function Chat() {
+  const [conversationId] = React.useState(() => generateId())
+  const [items, setItems] = React.useState<ChatItem[]>([
+    { id: generateId(), kind: "separator", text: "iMessage" },
+    { id: generateId(), kind: "separator", text: "Today 9:41 AM" },
+    {
+      id: generateId(),
+      kind: "message",
+      role: "bot",
+      content: "Hey, I'm Clanker, your personal butler, what are you trying to schedule?",
+    },
+  ])
+  const [input, setInput] = React.useState("")
+  const [sending, setSending] = React.useState(false)
+  const scrollRef = React.useRef<HTMLDivElement>(null)
+  const inputRef = React.useRef<HTMLInputElement>(null)
+
+  React.useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" })
+  }, [items])
+
+  async function handleSend() {
+    const text = input.trim()
+    if (!text) return
+
+    const messageId = generateId()
+    const userMsg: ChatItem = { id: messageId, kind: "message", role: "user", content: text }
+    const popMsg: ChatItem = { id: generateId(), kind: "message", role: "bot", content: "typing...", pending: true }
+
+    setItems((prev) => [...prev, userMsg, popMsg])
+    setInput("")
+    setSending(true)
+
+    try {
+      const res = await fetch(resolveApiUrl(SEND_MESSAGE_ENDPOINT_PATH), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text, conversationId } satisfies SendMessageRequest),
+      })
+      if (!res.ok) throw new Error("Request failed")
+      const data: SendMessageResponse = await res.json()
+
+      setItems((prev) =>
+        prev.map((it) => (it.id === popMsg.id && it.kind === "message" ? { ...it, content: data.reply, pending: false } : it)),
+      )
+    } catch {
+      setItems((prev) =>
+        prev.map((it) =>
+          it.id === popMsg.id && it.kind === "message"
+            ? { ...it, content: "Failed to get response. Please try again.", pending: false }
+            : it,
+        ),
+      )
+    } finally {
+      setSending(false)
+      inputRef.current?.focus()
+    }
+  }
+
+  function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter") {
+      e.preventDefault()
+      handleSend()
+    }
+  }
+
+  const lastUserIndex = React.useMemo(() => {
+    for (let i = items.length - 1; i >= 0; i--) {
+      const it = items[i]
+      if (it.kind === "message" && it.role === "user") return i
+    }
+    return -1
+  }, [items])
+
+  return (
+    <div className="flex h-full flex-col">
+      <ChatHeader />
+
+      <div ref={scrollRef} className={cn("flex-1", "px-3 sm:px-4", "py-3 sm:py-4", "overflow-y-auto", "bg-white")}>
+        <div className="mx-auto flex w-full max-w-[620px] flex-col gap-2">
+          {items.map((it, idx) => {
+            if (it.kind === "separator") {
+              return (
+                <div key={it.id} className="text-center text-[12px] leading-none text-[#8E8E93]">
+                  {it.text}
+                </div>
+              )
+            }
+            return (
+              <React.Fragment key={it.id}>
+                <ChatBubble role={it.role} pending={it.pending}>
+                  {it.pending && it.role === "bot" ? <TypingIndicator /> : it.content}
+                </ChatBubble>
+                {it.role === "user" && idx === lastUserIndex && (
+                  <div className="mt-1 flex justify-end pr-2">
+                    <span className="text-[11px] leading-none text-[#8E8E93]">Delivered</span>
+                  </div>
+                )}
+              </React.Fragment>
+            )
+          })}
+        </div>
+      </div>
+
+      <div className="border-t border-[#EBEBF0] bg-white px-3 py-3 sm:px-4">
+        <div className="mx-auto flex w-full max-w-[620px] items-center gap-2">
+          <button
+            type="button"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#F2F2F7] text-[#0A84FF]"
+            aria-label="Add more"
+          >
+            <Plus className="h-5 w-5" />
+          </button>
+          <div
+            className={cn(
+              "flex w-full items-center",
+              "rounded-full",
+              "bg-[#F2F2F7]",
+              "px-4",
+              "py-2.5",
+              "border border-transparent",
+              "focus-within:border-[#D1D1D6]",
+            )}
+          >
+            <label htmlFor="imessage-input" className="sr-only">
+              Message
+            </label>
+            <input
+              id="imessage-input"
+              ref={inputRef}
+              type="text"
+              inputMode="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={onKeyDown}
+              placeholder="iMessage"
+              aria-label="iMessage text input"
+              className={cn(
+                "w-full bg-transparent outline-none",
+                "placeholder:text-[#8E8E93]",
+                "text-[17px] leading-6",
+                "font-normal",
+                "text-black",
+              )}
+            />
+            {input.trim().length === 0 ? (
+              <Mic className="h-5 w-5 text-[#8E8E93]" aria-hidden="true" />
+            ) : (
+              <button
+                type="button"
+                onClick={handleSend}
+                disabled={sending}
+                className={cn(
+                  "ml-2 inline-flex h-8 w-8 items-center justify-center rounded-full",
+                  "bg-[#0A84FF] text-white",
+                  sending ? "opacity-60" : "opacity-100",
+                )}
+                aria-label="Send"
+              >
+                <ArrowUp className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ChatHeader() {
+  return (
+    <header className="flex items-center justify-between border-b border-[#EBEBF0] bg-white px-3 py-2.5 sm:px-4">
+      <button className="inline-flex items-center gap-1 text-[#0A84FF]" aria-label="Back">
+        <ChevronLeft className="h-5 w-5" />
+      </button>
+      <div className="flex min-w-0 flex-col items-center">
+        <div className="h-10 w-10 rounded-full bg-[#E9E9EB] flex items-center justify-center">
+          <Bot className="h-6 w-6 text-[#8E8E93]" />
+        </div>
+        <div className="mt-0.5 flex items-center gap-1 text-[13px] font-medium text-black">
+          <span>Clanker</span>
+          <span className="text-[#8E8E93]">{">"}</span>
+        </div>
+      </div>
+      <button className="inline-flex items-center text-[#0A84FF]" aria-label="FaceTime">
+        <Video className="h-5 w-5" />
+      </button>
+    </header>
+  )
+}
